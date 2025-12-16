@@ -1,18 +1,24 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Container } from '@mui/material'
+
 import Header from './components/Header'
+import PokemonList from './components/PokemonList'
+import PokemonForm from './components/PokemonForm'
+
 import './App.css'
-import { Container, Grid } from "@mui/material"
-import PokemonCard from './components/PokemonCard'
-import Pokemonlist from './components/PokemonList'
 
 function App() {
   return (
-    <>
-      <Header title="Pokedex" />
+    <BrowserRouter>
+      <Header />
 
-      <Container sx={{ padding: 2 }}>
-       <Pokemonlist />
+      <Container>
+        <Routes>
+          <Route path="/" element={<PokemonList />} />
+          <Route path="/add-pokemon" element={<PokemonForm />} />
+        </Routes>
       </Container>
-    </>
+    </BrowserRouter>
   )
 }
 

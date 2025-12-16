@@ -1,7 +1,5 @@
-html, body, #root {
-  margin: auto ;
-  padding: auto ;
-  height: auto;
-  width: auto ;
-  
+html, body, #root{
+  margin: auto;
+  padding: auto;
+  height: 100%;
 }
