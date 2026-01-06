@@ -4,8 +4,11 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
 const CLIENT_SECRET = import.meta.env.VITE_CLIENT_SECRET;
 
+const getOAuthURL = (endpoint) => {
+    return API_BASE_URL.replace('/api', '') + endpoint;
+};
+
 export async function login(username, password) {
-    // Definimos los parámetros para el flujo OAuth2 password grant
     const params = new URLSearchParams();
     params.append('grant_type', 'password');
     params.append('username', username);
@@ -15,19 +18,38 @@ export async function login(username, password) {
 
     try {
         const response = await axios.post(
-            `${API_BASE_URL}/o/token/`, // Asegúrate de que el endpoint sea correcto (/o/token/ o /oauth/token)
+            getOAuthURL('/o/token/'), 
             params,
             {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             }
         );
-
-        // Retornamos los datos (access_token, refresh_token, etc.)
         return response.data;
     } catch (error) {
         console.error("Error en el login:", error.response?.data || error.message);
-        throw error; // Re-lanzamos el error para manejarlo en el componente UI
+        throw error;
+    }
+}
+
+export async function logout() {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    const params = new URLSearchParams();
+    params.append('token', token);
+    params.append('client_id', CLIENT_ID);
+    params.append('client_secret', CLIENT_SECRET);
+
+    try {
+        // CORRECCIÓN: Usar backticks `` para el template literal y la URL correcta de OAuth
+        await axios.post(getOAuthURL('/o/revoke-token/'), params, {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        });
+    } catch (error) {
+        console.error("Error al revocar token en el servidor:", error);
+        // Aunque falle el servidor, seguimos para borrar el token localmente
+    } finally {
+        // Siempre borramos el token del navegador para que la UI se actualice
+        localStorage.removeItem('access_token');
     }
 }
