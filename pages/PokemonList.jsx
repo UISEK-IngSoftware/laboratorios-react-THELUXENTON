@@ -1,44 +1,47 @@
-// src/components/PokemonList.jsx
-
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Grid } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import PokemonCard from '../src/components/PokemonCard';
-import { fetchPokemons } from '../src/services/PokemonService'; 
+import { fetchPokemons, deletePokemon } from '../src/services/PokemonService';
 
 export default function PokemonList() {
-    const [pokemons, setPokemons] = useState([]);
+  const [pokemons, setPokemons] = useState([]);
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchPokemons()
-            .then((data) => {
-                // CORRECCIÓN FINAL: Si la respuesta es un ARRAY directo, usa data.
-                if (Array.isArray(data)) {
-                     setPokemons(data); 
-                } 
-                // Si tienes alguna vista con paginación que use 'results', puedes descomentar lo siguiente:
-                /* else if (data && Array.isArray(data.results)) {
-                     setPokemons(data.results); 
-                } */ 
-                else {
-                    console.error('La API no devolvió un array directo. Respuesta:', data);
-                    setPokemons([]);
-                }
-            })
-            .catch((error) => {
-                console.error('Error obteniendo los pokemons:', error);
-                alert("Error obteniendo los pokemons. Verifica el servidor.");
-            });
-    }, []); 
+  const isAuth = Boolean(localStorage.getItem('access_token'));
 
-    return (
-        <Grid container spacing={2}>
-            {Array.isArray(pokemons) && pokemons.map(
-                (pokemon, index) => (
-                    <Grid item key={pokemon.id || index} xs={12} sm={6} md={4}> 
-                        <PokemonCard pokemon={pokemon} />
-                    </Grid>
-                )
-            )}
+  useEffect(() => {
+    fetchPokemons()
+      .then(data => setPokemons(Array.isArray(data) ? data : []))
+      .catch(err => console.error('Error:', err));
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!isAuth || !window.confirm('¿Eliminar este Pokémon permanentemente?')) return;
+
+    try {
+      await deletePokemon(id);
+      setPokemons(prev => prev.filter(p => p.id !== id));
+      alert('¡Pokémon eliminado correctamente!');
+    } catch (error) {
+      console.error(error);
+      alert('Error al eliminar.');
+    }
+  };
+
+  return (
+    <Grid container spacing={2}>
+      {pokemons.map((pokemon) => (
+        <Grid item key={pokemon.id} xs={12} sm={6} md={4}>
+          <PokemonCard
+            pokemon={pokemon}
+            isAuth={isAuth}
+            onDelete={handleDelete}
+            onEdit={() => navigate(`/edit-pokemon/${pokemon.id}`)}
+            onViewDetails={() => navigate(`/pokemon/${pokemon.id}`)}
+          />
         </Grid>
-    );
+      ))}
+    </Grid>
+  );
 }

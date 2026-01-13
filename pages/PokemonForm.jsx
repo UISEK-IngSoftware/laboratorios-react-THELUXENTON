@@ -1,110 +1,128 @@
-import { Box, TextField, Typography, Button, Container } from '@mui/material'; 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import { createPokemon } from '../src/services/PokemonService';
+import { Box, TextField, Typography, Button } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  createPokemon,
+  updatePokemon,
+  fetchPokemonById
+} from '../src/services/PokemonService';
+
+const initialState = {
+  name: '',
+  type: '',
+  weight: '',
+  height: '',
+  picture: null,
+};
 
 export default function PokemonForm() {
-  // 1. Estado para capturar los datos (Igual al de tu amigo)
-  const [pokemonData, setPokemonData] = useState({
-    name: '',
-    type: '',
-    weight: '',
-    height: '',
-    picture: null,
-  });
-
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  // 2. Manejador de cambios (Corregido para que funcione con los nombres de los inputs)
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "picture") {
-      setPokemonData({
-        ...pokemonData,
-        picture: files[0] // Captura el archivo de imagen
-      });
+  const [pokemonData, setPokemonData] = useState(initialState);
+  const [preview, setPreview] = useState(null);
+
+  useEffect(() => {
+    if (!id) return;
+
+    fetchPokemonById(id)
+      .then(data => {
+        setPokemonData(data);
+        setPreview(data.picture);
+      })
+      .catch(err => console.error("Error cargando datos:", err));
+  }, [id]);
+
+  const handleChange = ({ target }) => {
+    const { name, value, files } = target;
+
+    if (files) {
+      const file = files[0];
+      setPokemonData(prev => ({ ...prev, picture: file }));
+
+      const reader = new FileReader();
+      reader.onloadend = () => setPreview(reader.result);
+      reader.readAsDataURL(file);
     } else {
-      setPokemonData({
-        ...pokemonData,
-        [name]: value
-      });
+      setPokemonData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  // 3. Función de envío (Ahora fuera de handleChange, como debe ser)
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await createPokemon(pokemonData);
-      alert("¡Pokemon creado con éxito!");
-      navigate('/'); 
+      id
+        ? await updatePokemon(id, pokemonData)
+        : await createPokemon(pokemonData);
+
+      alert(`¡Pokemon ${id ? 'actualizado' : 'creado'} con éxito!`);
+      navigate('/');
     } catch (error) {
-      console.error("Error al crear el Pokémon:", error);
-      alert("Hubo un error al crear el Pokémon."); 
+      console.error("Error al guardar:", error);
+      alert("Hubo un error al guardar.");
     }
   };
 
   return (
-    <Box sx={{ p: 4 }}>
+    <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Typography variant="h5" gutterBottom>
-        Formulario de Pokemon
+        {id ? "Editar Pokemon" : "Nuevo Pokemon"}
       </Typography>
 
-      <Box 
-        component="form" 
-        onSubmit={handleSubmit} 
-        sx={{ display: "flex", flexDirection: "column", gap: 2, maxWidth: 400 }}
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', maxWidth: 400 }}
       >
-        <TextField 
-          label="Nombre" 
-          name="name" // IMPORTANTE: El 'name' debe coincidir con el estado
-          variant="outlined" 
-          value={pokemonData.name}
-          onChange={handleChange} 
-          required
-        />
-        <TextField 
-          label="Tipo" 
-          name="type" 
-          variant="outlined" 
-          value={pokemonData.type}
-          onChange={handleChange} 
-          required
-        />
-        <TextField 
-          label="Peso" 
-          name="weight" 
-          variant="outlined" 
-          type="number" 
-          value={pokemonData.weight}
-          onChange={handleChange} 
-          required
-        />
-        <TextField 
-          label="Altura" 
-          name="height" 
-          variant="outlined" 
-          type="number" 
-          value={pokemonData.height}
-          onChange={handleChange} 
-          required
-        />
-        
-        <Typography variant="body2" sx={{ mt: 1 }}>Foto del Pokemon:</Typography>
-        <input 
-          type="file" 
-          name="picture" 
-          accept="image/*" 
-          onChange={handleChange} 
-          required
-        /> 
+        {['name', 'type', 'weight', 'height'].map((field) => (
+          <TextField
+            key={field}
+            label={field === 'name' ? 'Nombre' :
+                   field === 'type' ? 'Tipo' :
+                   field === 'weight' ? 'Peso' : 'Altura'}
+            name={field}
+            type={field === 'weight' || field === 'height' ? 'number' : 'text'}
+            value={pokemonData[field]}
+            onChange={handleChange}
+            required
+          />
+        ))}
 
-        <Button 
-          type="submit" 
-          variant="contained" 
-          sx={{ mt: 2, backgroundColor: "#4479cc" }}
-        >
-          Guardar Pokemon
+        <Typography variant="body2" fontWeight="bold">
+          Foto del Pokemon:
+        </Typography>
+
+        {preview && (
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <img
+              src={preview}
+              alt="Vista previa"
+              style={{
+                width: 150,
+                height: 150,
+                objectFit: 'contain',
+                borderRadius: 8,
+                border: '1px solid #ddd'
+              }}
+            />
+          </Box>
+        )}
+
+        <input
+          type="file"
+          name="picture"
+          accept="image/*"
+          onChange={handleChange}
+          required={!id}
+        />
+
+        <Button type="submit" variant="contained" sx={{ mt: 2 }}>
+          {id ? "Guardar Cambios" : "Guardar Pokemon"}
+        </Button>
+
+        <Button onClick={() => navigate('/')} color="inherit">
+          Cancelar
         </Button>
       </Box>
     </Box>
