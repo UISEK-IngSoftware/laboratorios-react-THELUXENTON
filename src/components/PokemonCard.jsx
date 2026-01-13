@@ -1,6 +1,5 @@
 import { Card, CardContent, CardMedia, Typography, CardActions, Button } from "@mui/material";
 
-// Agregamos 'isAuth' a las props que recibe
 export default function PokemonCard({ pokemon, onDelete, onEdit, onViewDetails, isAuth }) {
 
     const pokemonImageUrl = pokemon.picture; 
@@ -32,7 +31,7 @@ export default function PokemonCard({ pokemon, onDelete, onEdit, onViewDetails, 
                     Detalles
                 </Button>
 
-                {/* LOS BOTONES DE ADMINISTRADOR (SOLO SI isAuth es TRUE) */}
+                {/* LOS BOTONES DE ADMINISTRADOR SOLO SI isAuth es TRUE */}
                 {isAuth && (
                     <>
                         <Button 
