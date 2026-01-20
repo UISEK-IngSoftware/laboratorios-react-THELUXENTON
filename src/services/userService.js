@@ -41,15 +41,12 @@ export async function logout() {
     params.append('client_secret', CLIENT_SECRET);
 
     try {
-        // CORRECCIÓN: Usar backticks `` para el template literal y la URL correcta de OAuth
         await axios.post(getOAuthURL('/o/revoke-token/'), params, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         });
     } catch (error) {
         console.error("Error al revocar token en el servidor:", error);
-        // Aunque falle el servidor, seguimos para borrar el token localmente
     } finally {
-        // Siempre borramos el token del navegador para que la UI se actualice
         localStorage.removeItem('access_token');
     }
 }

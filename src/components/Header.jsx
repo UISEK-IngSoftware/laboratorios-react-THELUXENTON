@@ -1,12 +1,14 @@
 import { AppBar, Container, Toolbar, Button } from "@mui/material"; 
 import pokedexLogo from "../assets/pokedex_logo.png"; 
 import "./Header.css";
-import { useNavigate } from "react-router-dom";
-import { logout } from "../services/userService";
 
+// 1. AGREGAMOS useLocation para que el menú se actualice al navegar
+import { logout } from "../services/userService";
+import { useNavigate } from "react-router-dom";
 export default function Header() {
     const navigate = useNavigate();
 
+    // Esta línea se ejecuta de nuevo cada vez que cambias de ruta gracias a 'location'
     const isLoggedIn = localStorage.getItem('access_token') !== null;
 
     const handleLogout = async () => {
@@ -29,6 +31,11 @@ export default function Header() {
                             <Container>
                                 <Button color="inherit" href="/">
                                     Inicio
+                                </Button>
+
+                                {/* BOTÓN DE ENTRENADORES  */}
+                                <Button color="inherit" href="/trainers">
+                                    Entrenadores
                                 </Button>
 
                                 {isLoggedIn ? (
